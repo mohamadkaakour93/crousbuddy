@@ -25,33 +25,46 @@ const authMiddleware = (req, res, next) => {
 };
   
 
-  router.post('/signup', async (req, res) => {
+router.post('/signup', async (req, res) => {
     const { email, password, role, studentDetails, hostDetails } = req.body;
   
     try {
+      // Vérification du rôle
       if (!['Student', 'Host'].includes(role)) {
         return res.status(400).json({ message: "Le rôle doit être 'Student' ou 'Host'." });
       }
   
+      // Validation pour l'étudiant
       if (role === 'Student') {
         if (!studentDetails || !studentDetails.name || !studentDetails.birthDate || !studentDetails.city) {
           return res.status(400).json({ message: 'Les champs étudiant sont obligatoires.' });
         }
       }
   
+      // Validation pour l'hébergeur
       if (role === 'Host') {
         if (!hostDetails || !hostDetails.name || !hostDetails.birthDate || !hostDetails.city || !hostDetails.address || !hostDetails.houseSize || !hostDetails.signature) {
-            return res.status(400).json({ message: 'Les champs hébergeur sont obligatoires.' });
+          return res.status(400).json({ message: 'Les champs hébergeur sont obligatoires.' });
         }
         if (hostDetails.houseSize < 18) {
-            return res.status(400).json({ message: 'La maison doit être d\'au moins 18m².' });
+          return res.status(400).json({ message: 'La maison doit être d\'au moins 18m².' });
         }
-    }
-    
+      }
   
-      // Créer un nouvel utilisateur
+      // Créer un nouvel utilisateur avec les données appropriées
       const hashedPassword = await bcrypt.hash(password, 10);
-      const user = new User({ email, password: hashedPassword, role, studentDetails, hostDetails });
+  
+      const userData = {
+        email,
+        password: hashedPassword,
+        role,
+        // Inclure studentDetails seulement pour un étudiant
+        studentDetails: role === 'Student' ? studentDetails : undefined,
+        // Inclure hostDetails seulement pour un hébergeur
+        hostDetails: role === 'Host' ? hostDetails : undefined
+      };
+  
+      const user = new User(userData);
       await user.save();
   
       res.status(201).json({ message: 'Inscription réussie.' });
@@ -60,6 +73,7 @@ const authMiddleware = (req, res, next) => {
       res.status(500).json({ message: 'Erreur serveur.' });
     }
   });
+  
   
 router.post('/auth/send-reset-password-email', async (req, res) => {
     const { email } = req.body;
