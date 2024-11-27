@@ -82,29 +82,40 @@ router.get('/me', authMiddleware, async (req, res) => {
 
 // Mettre à jour le profil utilisateur (PUT /api/user/me)
 router.put('/me', authMiddleware, async (req, res) => {
-    const { email, preferences } = req.body;
+  const { email, preferences, hostDetails } = req.body;
 
-    try {
-        const user = await User.findById(req.user.id);
-        if (!user) {
-            return res.status(404).json({ message: 'Utilisateur non trouvé.' });
-        }
+  try {
+      const user = await User.findById(req.user.id);
+      if (!user) {
+          return res.status(404).json({ message: 'Utilisateur non trouvé.' });
+      }
 
-        // Mettre à jour les champs autorisés
-        if (email) user.email = email;
-        if (preferences) {
-            user.preferences = {
-                city: preferences.city || user.preferences.city,
-                occupationModes: preferences.occupationModes || user.preferences.occupationModes,
-            };
-        }
+      // Mettre à jour l'email (champs généraux)
+      if (email) user.email = email;
 
-        await user.save();
-        res.status(200).json({ message: 'Profil mis à jour avec succès.', user });
-    } catch (error) {
-        console.error('Erreur lors de la mise à jour du profil utilisateur:', error);
-        res.status(500).json({ message: 'Erreur serveur.' });
-    }
+      // Mettre à jour les préférences si l'utilisateur est un étudiant
+      if (user.role === 'Student' && preferences) {
+          user.studentDetails = {
+              city: preferences.city || user.studentDetails.city,
+              occupationModes: preferences.occupationModes || user.studentDetails.occupationModes,
+          };
+      }
+      // Mettre à jour les détails de l'hôte si l'utilisateur est un hébergeur
+      else if (user.role === 'Host' && hostDetails) {
+          user.hostDetails = {
+              name: hostDetails.name || user.hostDetails.name,
+              address: hostDetails.address || user.hostDetails.address,
+              houseSize: hostDetails.houseSize || user.hostDetails.houseSize,
+          };
+      }
+
+      // Sauvegarder les modifications dans la base de données
+      await user.save();
+      res.status(200).json({ message: 'Profil mis à jour avec succès.', user });
+  } catch (error) {
+      console.error('Erreur lors de la mise à jour du profil utilisateur:', error);
+      res.status(500).json({ message: 'Erreur serveur.' });
+  }
 });
 
 // Supprimer le profil utilisateur (DELETE /api/user/me)
