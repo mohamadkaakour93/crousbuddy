@@ -79,10 +79,11 @@ async function generateCrousUrl(city, occupationModes) {
 }
 
 // Fonction principale de scraping
+// Fonction principale de scraping
 async function scrapeWebsite(userId) {
   try {
-    // Récupérer l'utilisateur à partir de la base de données
-    const user = await User.findById(userId).select("email preferences");
+    // Récupérer l'utilisateur à partir de la base de données avec les préférences
+    const user = await User.findById(userId).select("email preferences role");
     if (!user) {
       console.error(`Utilisateur avec l'ID ${userId} introuvable.`);
       return false;
@@ -96,7 +97,10 @@ async function scrapeWebsite(userId) {
       return false;
     }
 
+    // Accéder aux informations de l'utilisateur
     const { city, occupationModes } = preferences;
+
+    console.log(`Préférences de l'utilisateur avec l'ID ${userId}: Ville: ${city}, Mode d'occupation: ${occupationModes}`);
 
     // Générer l'URL de recherche
     const url = await generateCrousUrl(city, occupationModes);
@@ -161,6 +165,7 @@ L'équipe CROUS Buddy
     return false;
   }
 }
+
 
 // Boucle de recherche continue pour chaque utilisateur
 async function startSearchLoop(userId) {

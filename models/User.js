@@ -36,11 +36,28 @@ const UserSchema = new mongoose.Schema({
 
 // Calcul automatique des attestations pour les hébergeurs
 UserSchema.pre('save', function (next) {
-  if (this.role === 'Host' && this.hostDetails.houseSize) {
-    this.hostDetails.maxAttestations = Math.floor((this.hostDetails.houseSize - 9) / 9);
-  }
-  next();
-});
+    // Si l'utilisateur est un hébergeur, on calcule `maxAttestations`
+    if (this.role === 'Host' && this.hostDetails.houseSize) {
+      this.hostDetails.maxAttestations = Math.floor((this.hostDetails.houseSize - 9) / 9);
+    }
+  
+    // Mise à jour du champ `preferences` selon le rôle
+    if (this.role === 'Student' && this.studentDetails) {
+      this.preferences = {
+        city: this.studentDetails.city,
+        occupationModes: this.studentDetails.occupationModes,
+      };
+    } else if (this.role === 'Host' && this.hostDetails) {
+      this.preferences = {
+        city: this.hostDetails.city,
+        occupationModes: '',  // Les hôtes n'ont pas de mode d'occupation
+      };
+    }
+  
+    // Passer au prochain middleware
+    next();
+  });
+  
 
 const User = mongoose.model('User', UserSchema);
 export default User;
