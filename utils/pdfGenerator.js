@@ -20,8 +20,8 @@ function generatePDF(host, student) {
       .replace('{{hostAddress}}', host.hostDetails.address)
       .replace('{{hostPostalCode}}', host.hostDetails.postalCode || 'Non spécifié')
       .replace('{{hostCity}}', host.hostDetails.city)
-      .replace('{{studentName}}', student.studentDetails.name)
-      .replace('{{studentBirthDate}}', student.studentDetails.birthDate)
+      .replace('{{studentName}}', student.name)
+      .replace('{{studentBirthDate}}', student.birthDate)
       .replace('{{startDate}}', new Date().toLocaleDateString('fr-FR')) // Date dynamique
       .replace('{{currentDate}}', new Date().toLocaleDateString('fr-FR'));
 
