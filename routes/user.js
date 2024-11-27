@@ -59,17 +59,25 @@ const router = express.Router();
 
   
 
+// Backend - Route pour récupérer le profil de l'utilisateur
 router.get('/me', authMiddleware, async (req, res) => {
-    try {
-        const user = await User.findById(req.user.id).select('-password');
-        if (!user) {
-            return res.status(404).json({ message: 'Utilisateur non trouvé.' });
-        }
-        res.status(200).json(user);
-    } catch (error) {
-        console.error('Erreur lors de la récupération du profil utilisateur:', error);
-        res.status(500).json({ message: 'Erreur serveur.' });
+  try {
+    const user = await User.findById(req.user.id).select('-password');
+    if (!user) {
+      return res.status(404).json({ message: 'Utilisateur non trouvé.' });
     }
+
+    // Renvoie les données appropriées en fonction du rôle
+    res.status(200).json({
+      email: user.email,
+      role: user.role,
+      studentDetails: user.studentDetails,  // Données de l'étudiant
+      hostDetails: user.hostDetails,        // Données de l'hébergeur
+    });
+  } catch (error) {
+    console.error('Erreur lors de la récupération du profil utilisateur:', error);
+    res.status(500).json({ message: 'Erreur serveur.' });
+  }
 });
 
 // Mettre à jour le profil utilisateur (PUT /api/user/me)
