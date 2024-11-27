@@ -66,50 +66,53 @@ router.post(
 
 router.post('/signup', async (req, res) => {
     const { email, password, role, studentDetails, hostDetails } = req.body;
-  
+
     try {
-      if (!['Student', 'Host'].includes(role)) {
-        return res.status(400).json({ message: "Le rôle doit être 'Student' ou 'Host'." });
-      }
-  
-      // Validation pour l'étudiant
-      if (role === 'Student') {
-        if (!studentDetails || !studentDetails.name || !studentDetails.birthDate || !studentDetails.city) {
-          return res.status(400).json({ message: 'Les champs étudiant sont obligatoires.' });
+        // Vérification du rôle
+        if (!['Student', 'Host'].includes(role)) {
+            return res.status(400).json({ message: "Le rôle doit être 'Student' ou 'Host'." });
         }
-      }
-  
-      // Validation pour l'hébergeur
-      if (role === 'Host') {
-        if (!hostDetails || !hostDetails.name || !hostDetails.birthDate || !hostDetails.city || !hostDetails.address || !hostDetails.houseSize || !hostDetails.signature) {
-          return res.status(400).json({ message: 'Les champs hébergeur sont obligatoires.' });
+
+        // Validation des informations en fonction du rôle
+        if (role === 'Student') {
+            if (!studentDetails || !studentDetails.name || !studentDetails.birthDate || !studentDetails.city) {
+                return res.status(400).json({ message: 'Les champs étudiant sont obligatoires.' });
+            }
         }
-        if (hostDetails.houseSize < 18) {
-          return res.status(400).json({ message: 'La maison doit être d\'au moins 18m².' });
+
+        if (role === 'Host') {
+            if (!hostDetails || !hostDetails.name || !hostDetails.birthDate || !hostDetails.city || !hostDetails.address || !hostDetails.houseSize || !hostDetails.signature) {
+                return res.status(400).json({ message: 'Les champs hébergeur sont obligatoires.' });
+            }
+            if (hostDetails.houseSize < 18) {
+                return res.status(400).json({ message: 'La maison doit être d\'au moins 18m².' });
+            }
         }
-      }
-  
-      // Créer un nouvel utilisateur avec les données appropriées
-      const hashedPassword = await bcrypt.hash(password, 10);
-  
-      // Créer un utilisateur avec les données pertinentes en fonction du rôle
-      const userData = {
-        email,
-        password: hashedPassword,
-        role,
-        studentDetails: role === 'Student' ? studentDetails : undefined,
-        hostDetails: role === 'Host' ? hostDetails : undefined
-      };
-  
-      const user = new User(userData);
-      await user.save();
-  
-      res.status(201).json({ message: 'Inscription réussie.' });
+
+        // Hashage du mot de passe
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // Préparation des données en fonction du rôle
+        const userData = {
+            email,
+            password: hashedPassword,
+            role,
+            studentDetails: role === 'Student' ? studentDetails : undefined, // Inclure uniquement pour les étudiants
+            hostDetails: role === 'Host' ? hostDetails : undefined,         // Inclure uniquement pour les hébergeurs
+        };
+
+        // Création de l'utilisateur
+        const user = new User(userData);
+        await user.save();
+
+        // Réponse de succès
+        res.status(201).json({ message: 'Inscription réussie.' });
     } catch (err) {
-      console.error(err);
-      res.status(500).json({ message: 'Erreur serveur.' });
+        console.error(err);
+        res.status(500).json({ message: 'Erreur serveur.' });
     }
-  });
+});
+
   
 router.post('/auth/send-reset-password-email', async (req, res) => {
     const { email } = req.body;
