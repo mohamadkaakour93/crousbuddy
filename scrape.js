@@ -80,26 +80,40 @@ async function generateCrousUrl(city, occupationModes) {
 
 // Fonction principale de scraping
 // Fonction principale de scraping
+// Fonction principale de scraping
 async function scrapeWebsite(userId) {
   try {
-    // Récupérer l'utilisateur à partir de la base de données avec les préférences
-    const user = await User.findById(userId).select("email preferences role");
+    // Récupérer l'utilisateur à partir de la base de données avec les détails nécessaires
+    const user = await User.findById(userId).select("email role studentDetails hostDetails");
+    
     if (!user) {
       console.error(`Utilisateur avec l'ID ${userId} introuvable.`);
       return false;
     }
 
-    const { email, preferences } = user;
+    const { email, role, studentDetails, hostDetails } = user;
+    let preferences = null;
 
-    // Vérifier si les préférences existent
+    // Vérifier et récupérer les préférences en fonction du rôle
+    if (role === 'Student' && studentDetails) {
+      preferences = {
+        city: studentDetails.city,
+        occupationModes: studentDetails.occupationModes,
+      };
+    } else if (role === 'Host' && hostDetails) {
+      preferences = {
+        city: hostDetails.city,
+        occupationModes: null, // Les hôtes n'ont pas de mode d'occupation spécifique
+      };
+    }
+
+    // Vérifier si les préférences sont valides
     if (!preferences || !preferences.city || !preferences.occupationModes) {
       console.error(`Les préférences de l'utilisateur avec l'ID ${userId} sont manquantes ou incorrectes.`);
       return false;
     }
 
-    // Accéder aux informations de l'utilisateur
     const { city, occupationModes } = preferences;
-
     console.log(`Préférences de l'utilisateur avec l'ID ${userId}: Ville: ${city}, Mode d'occupation: ${occupationModes}`);
 
     // Générer l'URL de recherche
@@ -143,8 +157,7 @@ L'équipe CROUS Buddy
       userStates.set(userId, userState);
       return true; // Recherche terminée pour cet utilisateur
     } else if (!userState.noLogementMailSent) {
-      const noLogementMessage = `
-Bonjour,
+      const noLogementMessage = `Bonjour,
 
 Actuellement, aucun logement correspondant à vos critères n'est disponible.
 Nous continuerons à chercher et vous tiendrons informé dès qu’un logement sera trouvé.
