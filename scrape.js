@@ -89,6 +89,13 @@ async function scrapeWebsite(userId) {
     }
 
     const { email, preferences } = user;
+
+    // Vérifier si les préférences existent
+    if (!preferences || !preferences.city || !preferences.occupationModes) {
+      console.error(`Les préférences de l'utilisateur avec l'ID ${userId} sont manquantes ou incorrectes.`);
+      return false;
+    }
+
     const { city, occupationModes } = preferences;
 
     // Générer l'URL de recherche
