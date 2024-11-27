@@ -52,6 +52,8 @@ const router = express.Router();
   router.post("/search", authMiddleware, async (req, res) => {
     const userId = req.user.id; // ID de l'utilisateur connecté récupéré depuis le middleware
     const { city, occupationModes } = req.body; // Récupérer les préférences envoyées depuis le frontend
+    console.log('Données reçues côté serveur:', req.body);
+
   
     // Vérifier que les données sont présentes avant de procéder au scraping
     if (!city || !occupationModes) {
