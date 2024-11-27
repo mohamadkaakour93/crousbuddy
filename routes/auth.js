@@ -34,14 +34,14 @@ router.post('/signup', async (req, res) => {
         return res.status(400).json({ message: "Le rôle doit être 'Student' ou 'Host'." });
       }
   
-      // Validation pour l'étudiant
+      // Validation des champs pour l'étudiant
       if (role === 'Student') {
         if (!studentDetails || !studentDetails.name || !studentDetails.birthDate || !studentDetails.city) {
           return res.status(400).json({ message: 'Les champs étudiant sont obligatoires.' });
         }
       }
   
-      // Validation pour l'hébergeur
+      // Validation des champs pour l'hébergeur
       if (role === 'Host') {
         if (!hostDetails || !hostDetails.name || !hostDetails.birthDate || !hostDetails.city || !hostDetails.address || !hostDetails.houseSize || !hostDetails.signature) {
           return res.status(400).json({ message: 'Les champs hébergeur sont obligatoires.' });
