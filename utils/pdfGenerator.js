@@ -23,7 +23,9 @@ function generatePDF(host, student) {
       .replace('{{studentName}}', student.name)
       .replace('{{studentBirthDate}}', student.birthDate)
       .replace('{{startDate}}', new Date().toLocaleDateString('fr-FR')) // Date dynamique
-      .replace('{{currentDate}}', new Date().toLocaleDateString('fr-FR'));
+      .replace('{{hostCity}}', host.hostDetails.city)
+      .replace('{{currentDate}}', new Date().toLocaleDateString('fr-FR'))
+      .replace('{{hostSignature}}', host.hostDetails.signature);
 
     // Ajouter la signature dynamique
     const signatureImageTag = host.hostDetails.signature
