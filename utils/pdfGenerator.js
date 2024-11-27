@@ -24,14 +24,17 @@ function generatePDF(host, student) {
       .replace('{{studentBirthDate}}', student.birthDate)
       .replace('{{startDate}}', new Date().toLocaleDateString('fr-FR')) // Date dynamique
       .replace('{{hostCity}}', host.hostDetails.city)
-      .replace('{{currentDate}}', new Date().toLocaleDateString('fr-FR'))
-      .replace('{{hostSignature}}', host.hostDetails.signature);
+      .replace('{{currentDate}}', new Date().toLocaleDateString('fr-FR'));
+      
+
 
     // Ajouter la signature dynamique
     const signatureImageTag = host.hostDetails.signature
       ? `<img src="data:image/png;base64,${host.hostDetails.signature}" alt="Signature" style="width: 150px; height: auto;">`
       : '________________________';
     const htmlWithSignature = htmlWithValues.replace('{{hostSignature}}', signatureImageTag);
+    console.log('Signature de l\'hôte :', host.hostDetails.signature);
+
 
     // Définir le chemin du fichier PDF
     const outputDir = path.join(__dirname, '../attestations');
