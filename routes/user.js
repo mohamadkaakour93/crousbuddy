@@ -49,25 +49,47 @@ const router = express.Router();
     }
   });*/
 
-  router.post("/search", authMiddleware, (req, res) => {
-    const { city, occupationModes } = req.body;  // Récupérer directement city et occupationModes
-    console.log(`Ville: ${city}, Mode d'occupation: ${occupationModes}`);
-    const userId = req.user.id;  // ID de l'utilisateur connecté récupéré depuis le middleware
-    
-    if (!city || !occupationModes) {
-      return res.status(400).json({ message: 'Ville et mode d\'occupation requis.' });
+  router.post("/search", authMiddleware, async (req, res) => {
+    const userId = req.user.id; // ID de l'utilisateur connecté récupéré depuis le middleware
+
+    try {
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "Utilisateur non trouvé." });
+        }
+
+        // Si l'utilisateur est un hébergeur (Host), on le bloque de la recherche
+        if (user.role === 'Host') {
+            return res.status(403).json({
+                message: "Les hébergeurs ne peuvent pas utiliser cette fonctionnalité.",
+            });
+        }
+
+        // Si c'est un étudiant, on récupère ses préférences
+        let preferences;
+        if (user.role === "Student" && user.studentDetails) {
+            preferences = user.studentDetails;  // Récupérer les préférences d'un étudiant
+        } else if (user.role === "Host" && user.hostDetails) {
+            preferences = user.hostDetails;  // Récupérer les préférences d'un hébergeur (si jamais nécessaire)
+        }
+
+        if (!preferences) {
+            return res.status(400).json({ message: "Les préférences utilisateur sont manquantes." });
+        }
+
+        console.log(`Préférences de l'utilisateur avec l'ID ${userId}:`, preferences);
+
+        // Appeler la fonction de recherche automatique
+        addUserToSearch(userId);
+
+        res.status(200).json({
+            message: "Votre recherche automatique a été lancée. Vous recevrez un e-mail dès qu'un logement sera trouvé.",
+        });
+    } catch (error) {
+        console.error("Erreur lors du traitement de la recherche :", error.message);
+        res.status(500).json({ message: "Erreur serveur." });
     }
-  
-    console.log(`Recherche pour ${city} avec mode d'occupation ${occupationModes}`);
-  
-    // Votre logique de scraping ici...
-    addUserToSearch(userId);  // Ajouter l'utilisateur à la recherche continue
-  
-    res.status(200).json({
-      message: "Votre recherche automatique a été lancée. Vous recevrez un e-mail dès qu'un logement sera trouvé.",
-    });
-  });
-  
+});
 
   
 
