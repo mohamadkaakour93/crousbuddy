@@ -23,6 +23,45 @@ const authMiddleware = (req, res, next) => {
         res.status(401).json({ message: 'Token invalide.' });
     }
 };
+
+// Route Login
+router.post(
+    '/login',
+    [
+        check('email', 'Veuillez fournir un email valide').isEmail(),
+        check('password', 'Le mot de passe est obligatoire').exists()
+    ],
+    async (req, res) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+
+        const { email, password } = req.body;
+
+        try {
+            // Vérifier si l'utilisateur existe
+            const user = await User.findOne({ email });
+            if (!user) {
+                return res.status(400).json({ message: 'Identifiants invalides.' });
+            }
+
+            // Vérifier le mot de passe
+            const isMatch = await bcrypt.compare(password, user.password);
+            if (!isMatch) {
+                return res.status(400).json({ message: 'Identifiants invalides.' });
+            }
+
+            // Générer un token JWT
+            const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+            res.json({ token });
+        } catch (error) {
+            console.error(error.message);
+            res.status(500).send('Erreur serveur.');
+        }
+    }
+);
   
 
 router.post('/signup', async (req, res) => {
