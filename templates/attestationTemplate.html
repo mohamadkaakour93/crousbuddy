@@ -34,6 +34,9 @@
       width: 50%;
       border-top: 1px solid #000;
     }
+    .signature img {
+      max-width: 200px;
+    }
   </style>
 </head>
 <body>
@@ -50,7 +53,7 @@
     <p>Fait à : <strong>{{hostCity}}</strong>, le <strong>{{currentDate}}</strong></p>
     <div class="signature">
       <p>Signature :</p>
-      <div class="signature-line"></div>
+      {{hostSignature}}
     </div>
   </div>
 </body>

@@ -3,107 +3,63 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { check, validationResult } from 'express-validator';
 import nodemailer from "nodemailer";
+import User from '../models/User';
 
 const router = express.Router();
 
 
 
 // Middleware pour vérifier le token JWT
-const generateToken = (user) => {
-    return jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
-      expiresIn: '1h',
-    });
-  };
+const authMiddleware = (req, res, next) => {
+    const token = req.header('x-auth-token');
+    if (!token) {
+        return res.status(401).json({ message: 'Token manquant. Accès non autorisé.' });
+    }
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        req.user = decoded;
+        next();
+    } catch (error) {
+        res.status(401).json({ message: 'Token invalide.' });
+    }
+};
   
 
-router.post('/signup/student', async (req, res) => {
-    const { name, birthDate, city, email, password } = req.body;
+  router.post('/signup', async (req, res) => {
+    const { email, password, role, studentDetails, hostDetails } = req.body;
   
     try {
+      if (!['Student', 'Host'].includes(role)) {
+        return res.status(400).json({ message: "Le rôle doit être 'Student' ou 'Host'." });
+      }
+  
+      if (role === 'Student') {
+        if (!studentDetails || !studentDetails.name || !studentDetails.birthDate || !studentDetails.city) {
+          return res.status(400).json({ message: 'Les champs étudiant sont obligatoires.' });
+        }
+      }
+  
+      if (role === 'Host') {
+        if (!hostDetails || !hostDetails.name || !hostDetails.birthDate || !hostDetails.city || !hostDetails.address || !hostDetails.houseSize) {
+          return res.status(400).json({ message: 'Les champs hébergeur sont obligatoires.' });
+        }
+        if (hostDetails.houseSize < 18) {
+          return res.status(400).json({ message: 'La maison doit être d\'au moins 18m².' });
+        }
+      }
+  
+      // Créer un nouvel utilisateur
       const hashedPassword = await bcrypt.hash(password, 10);
-      const newStudent = new Student({
-        name,
-        birthDate,
-        city,
-        email,
-        password: hashedPassword,
-      });
+      const user = new User({ email, password: hashedPassword, role, studentDetails, hostDetails });
+      await user.save();
   
-      await newStudent.save();
-  
-      const token = generateToken({ _id: newStudent._id, role: 'Student' });
-      res.status(201).json({ token });
-    } catch (error) {
-      res.status(500).json({ message: error.message });
+      res.status(201).json({ message: 'Inscription réussie.' });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: 'Erreur serveur.' });
     }
   });
-  router.post('/signup/host', async (req, res) => {
-    const { name, birthDate, city, address, houseSize, email, password } = req.body;
   
-    if (houseSize < 18) {
-      return res.status(400).json({ message: 'La maison doit mesurer au moins 18m².' });
-    }
-  
-    try {
-      const hashedPassword = await bcrypt.hash(password, 10);
-      const newHost = new Host({
-        name,
-        birthDate,
-        city,
-        address,
-        houseSize,
-        email,
-        password: hashedPassword,
-      });
-  
-      await newHost.save();
-  
-      const token = generateToken({ _id: newHost._id, role: 'Host' });
-      res.status(201).json({ token });
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  });
-    
-// Route Login
-router.post(
-    '/login',
-    [
-        check('email', 'Veuillez fournir un email valide').isEmail(),
-        check('password', 'Le mot de passe est obligatoire').exists()
-    ],
-    async (req, res) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
-        }
-
-        const { email, password } = req.body;
-
-        try {
-            // Vérifier si l'utilisateur existe
-            const user = await User.findOne({ email });
-            if (!user) {
-                return res.status(400).json({ message: 'Identifiants invalides.' });
-            }
-
-            // Vérifier le mot de passe
-            const isMatch = await bcrypt.compare(password, user.password);
-            if (!isMatch) {
-                return res.status(400).json({ message: 'Identifiants invalides.' });
-            }
-
-            // Générer un token JWT
-            const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-
-            res.json({ token });
-        } catch (error) {
-            console.error(error.message);
-            res.status(500).send('Erreur serveur.');
-        }
-    }
-);
-
 router.post('/auth/send-reset-password-email', async (req, res) => {
     const { email } = req.body;
   

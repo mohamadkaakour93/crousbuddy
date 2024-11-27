@@ -15,15 +15,22 @@ function generatePDF(host, student) {
 
     // Remplacer les variables dynamiques dans le HTML
     const htmlWithValues = htmlTemplate
-    .replace('{{hostName}}', host.name)
-    .replace('{{hostBirthDate}}', host.birthDate)
-    .replace('{{hostAddress}}', host.address)
-    .replace('{{hostPostalCode}}', host.postalCode)
-    .replace('{{hostCity}}', host.city)
-    .replace('{{studentName}}', student.name)
-    .replace('{{studentBirthDate}}', student.birthDate)
-    .replace('{{startDate}}', new Date().toLocaleDateString('fr-FR')) // Date dynamique
-    .replace('{{currentDate}}', new Date().toLocaleDateString('fr-FR'));
+      .replace('{{hostName}}', host.hostDetails.name)
+      .replace('{{hostBirthDate}}', host.hostDetails.birthDate)
+      .replace('{{hostAddress}}', host.hostDetails.address)
+      .replace('{{hostPostalCode}}', host.hostDetails.postalCode || 'Non spécifié')
+      .replace('{{hostCity}}', host.hostDetails.city)
+      .replace('{{studentName}}', student.studentDetails.name)
+      .replace('{{studentBirthDate}}', student.studentDetails.birthDate)
+      .replace('{{startDate}}', new Date().toLocaleDateString('fr-FR')) // Date dynamique
+      .replace('{{currentDate}}', new Date().toLocaleDateString('fr-FR'));
+
+    // Ajouter la signature dynamique
+    const signatureImageTag = host.hostDetails.signature
+      ? `<img src="data:image/png;base64,${host.hostDetails.signature}" alt="Signature" style="width: 150px; height: auto;">`
+      : '________________________';
+    const htmlWithSignature = htmlWithValues.replace('{{hostSignature}}', signatureImageTag);
+
     // Définir le chemin du fichier PDF
     const outputDir = path.join(__dirname, '../attestations');
     if (!fs.existsSync(outputDir)) {
@@ -33,7 +40,7 @@ function generatePDF(host, student) {
     const filePath = path.join(outputDir, fileName);
 
     // Générer le PDF
-    pdf.create(htmlWithValues).toFile(filePath, (err, res) => {
+    pdf.create(htmlWithSignature).toFile(filePath, (err, res) => {
       if (err) {
         reject(new Error(`Erreur lors de la génération du PDF : ${err.message}`));
       } else {
