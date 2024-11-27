@@ -49,13 +49,33 @@ const router = express.Router();
     }
   });*/
 
-  router.post("/search", authMiddleware, (req, res) => {
+  router.post("/search", authMiddleware, async (req, res) => {
     const userId = req.user.id; // ID de l'utilisateur connecté récupéré depuis le middleware
-    addUserToSearch(userId); // Ajouter l'utilisateur à la recherche continue
-    res.status(200).json({
-      message: "Votre recherche automatique a été lancée. Vous recevrez un e-mail dès qu'un logement sera trouvé.",
-    });
+    const { city, occupationModes } = req.body; // Récupérer les préférences envoyées depuis le frontend
+  
+    // Vérifier que les données sont présentes avant de procéder au scraping
+    if (!city || !occupationModes) {
+      return res.status(400).json({
+        message: "Les informations de recherche (ville et mode d'occupation) sont manquantes.",
+      });
+    }
+  
+    try {
+      // Lancer le scraping ici (vous pouvez remplacer addUserToSearch par votre logique de scraping)
+      await addUserToSearch(userId, city, occupationModes); // Remplacez par votre propre fonction de scraping
+  
+      // Répondre après que le scraping ait démarré
+      res.status(200).json({
+        message: "Votre recherche automatique a été lancée. Vous recevrez un e-mail dès qu'un logement sera trouvé.",
+      });
+    } catch (error) {
+      console.error('Erreur lors du scraping:', error);
+      res.status(500).json({
+        message: 'Une erreur est survenue lors du lancement de la recherche. Veuillez réessayer.',
+      });
+    }
   });
+  
 
   
 
