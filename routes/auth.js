@@ -40,7 +40,7 @@ const authMiddleware = (req, res, next) => {
       }
   
       if (role === 'Host') {
-        if (!hostDetails || !hostDetails.name || !hostDetails.birthDate || !hostDetails.city || !hostDetails.address || !hostDetails.houseSize) {
+        if (!hostDetails || !hostDetails.name || !hostDetails.birthDate || !hostDetails.city || !hostDetails.address || !hostDetails.houseSize || !signature)  {
           return res.status(400).json({ message: 'Les champs hébergeur sont obligatoires.' });
         }
         if (hostDetails.houseSize < 18) {
