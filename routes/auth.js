@@ -40,13 +40,14 @@ const authMiddleware = (req, res, next) => {
       }
   
       if (role === 'Host') {
-        if (!hostDetails || !hostDetails.name || !hostDetails.birthDate || !hostDetails.city || !hostDetails.address || !hostDetails.houseSize || !signature)  {
-          return res.status(400).json({ message: 'Les champs hébergeur sont obligatoires.' });
+        if (!hostDetails || !hostDetails.name || !hostDetails.birthDate || !hostDetails.city || !hostDetails.address || !hostDetails.houseSize || !hostDetails.signature) {
+            return res.status(400).json({ message: 'Les champs hébergeur sont obligatoires.' });
         }
         if (hostDetails.houseSize < 18) {
-          return res.status(400).json({ message: 'La maison doit être d\'au moins 18m².' });
+            return res.status(400).json({ message: 'La maison doit être d\'au moins 18m².' });
         }
-      }
+    }
+    
   
       // Créer un nouvel utilisateur
       const hashedPassword = await bcrypt.hash(password, 10);
